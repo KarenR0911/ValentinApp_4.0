@@ -1,53 +1,53 @@
 <script setup>
-import { RouterLink } from "vue-router";
-import { useAuth } from "@/composables/useAuth";
-import { ref } from "vue";
-import Swal from "sweetalert2";
+import { RouterLink } from 'vue-router'
+import { useAuth } from '@/composables/useAuth'
+import { ref } from 'vue'
+import Swal from 'sweetalert2'
 
-const loading = ref(false);
-const email = ref("");
-const password = ref("");
-const emailregEx = /[^@ \t\r\n]{8,}@gmail\.com/g;
+const loading = ref(false)
+const email = ref('')
+const password = ref('')
+const emailregEx = /[^@ \t\r\n]{8,}@gmail\.com/g
 
-const { signUpWithPassw } = useAuth();
+const { signUpWithPassw } = useAuth()
 
 const signup = async () => {
   if (!emailregEx.test(email.value)) {
     Swal.fire({
-      icon: "error",
-      title: "Oops...",
-      text: "Debes usar un correo Gmail válido",
-    });
-    return;
+      icon: 'error',
+      title: 'Oops...',
+      text: 'Debes usar un correo Gmail válido',
+    })
+    return
   }
 
   try {
-    loading.value = true;
+    loading.value = true
     await signUpWithPassw({
       email: email.value,
       password: password.value,
-    });
+    })
     Swal.fire({
-      title: "Cuenta creada",
-      text: "Ya puedes iniciar sesión",
-      icon: "success",
-    });
+      title: 'Cuenta creada',
+      text: 'Ya puedes iniciar sesión',
+      icon: 'success',
+    })
   } catch (error) {
     Swal.fire({
-      icon: "error",
-      title: "Oops...",
+      icon: 'error',
+      title: 'Oops...',
       text: error.message,
-    });
+    })
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 </script>
 
 <template>
   <div
     class="h-screen w-screen bg-cover grid grid-cols-1 md:grid-cols-2 -mt-14"
-    style="background-image: url(&quot;/src/assets/img/hero-bg.jpg&quot;)"
+    style="background-image: url('/img/hero-bg.jpg')"
   >
     <!-- Panel izquierdo -->
     <div

@@ -50,7 +50,7 @@ async function login() {
 
 <template>
   <div class="h-screen w-screen bg-cover min-h-screen grid grid-cols-1 md:grid-cols-2 -mt-14"
-  style="background-image: url('/src/assets/img/hero-bg.jpg')"";>
+  style="background-image: url('/img/hero-bg.jpg')"";>
 
     <!-- Panel izquierdo -->
     <div class="hidden md:flex flex-col justify-center items-center px-12 text-white

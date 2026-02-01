@@ -1,103 +1,18 @@
 <script setup>
-import Preloader from "./Preloader.vue";
-import { ref, onMounted } from "vue";
-import { useSupabase } from "../clients/supabase";
-import { useAuth } from "@/composables/useAuth.js";
-import Swal from "sweetalert2";
+import Preloader from './Preloader.vue'
+import { ref, onMounted } from 'vue'
+import { useSupabase } from '../clients/supabase'
+import Swal from 'sweetalert2'
 
-const { supabase } = useSupabase();
-const { getUserRole } = useAuth();
-
-const cartas = ref([]);
-const oneCarta = ref([]);
-const decanato = ref("todos");
-const searchName = ref("");
-const loading = ref(true);
-const userRole = ref("");
-const showModal = ref(false);
-
-const checkUserRole = async () => {
-  try {
-    userRole.value = await getUserRole();
-  } catch {
-    console.log("Desautorizado");
-  }
-};
-
-const getCartas = async () => {
-  loading.value = true;
-  const { data } = await supabase
-    .from("cartas")
-    .select()
-    .order("id", { ascending: false });
-
-  cartas.value =
-    decanato.value === "todos"
-      ? data.map((c) => ({ ...c, isHovered: false }))
-      : data
-          .filter((c) => c.decanato === decanato.value)
-          .map((c) => ({ ...c, isHovered: false }));
-  loading.value = false;
-};
-
-const getOneCarta = async (id) => {
-  const { data } = await supabase.from("cartas").select().eq("id", id);
-  oneCarta.value = data;
-  showModal.value = true;
-};
-
-const searchCarta = async () => {
-  loading.value = true;
-  if (!searchName.value) {
-    await getCartas();
-  } else {
-    const wordOne = searchName.value;
-    const { data } = await supabase
-      .from("cartas")
-      .select()
-      .or(`destinatario.ilike.%${wordOne}%`);
-    cartas.value = data;
-  }
-  loading.value = false;
-};
-
-const cleanSearch = () => {
-  searchName.value = "";
-  getCartas();
-};
-
-const deleteCard = async (id) => {
-  try {
-    const { error } = await supabase.from("cartas").delete().eq("id", id);
-    if (error) throw error;
-    Swal.fire("Carta eliminada", "", "success");
-    getCartas();
-    showModal.value = false;
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-const questionDelete = async (id) => {
-  Swal.fire({
-    title: "¿Estás seguro?",
-    text: "No podrás revertir esta acción",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonColor: "#ec4899",
-    cancelButtonColor: "#fcd5ce",
-    confirmButtonText: "Sí, eliminar",
-    cancelButtonText: "Cancelar",
-  }).then((result) => {
-    if (result.isConfirmed) deleteCard(id);
-    else Swal.fire("La carta no ha sido eliminada", "", "info");
-  });
-};
+const { supabase } = useSupabase()
+const loading = ref(false)
 
 onMounted(() => {
-  getCartas();
-  checkUserRole();
-});
+  loading.value = true
+  setTimeout(() => {
+    loading.value = false
+  }, 800)
+})
 </script>
 
 <template>

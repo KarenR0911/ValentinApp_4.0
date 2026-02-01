@@ -1,8 +1,8 @@
 <script setup>
-import { ref } from "vue";
+import { ref } from 'vue'
 
-let year = new Date().getFullYear();
-let copyright = ref(year);
+let year = new Date().getFullYear()
+let copyright = ref(year)
 </script>
 
 <template>

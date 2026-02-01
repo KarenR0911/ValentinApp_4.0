@@ -2,7 +2,7 @@
   <section
     class="min-h-screen flex flex-col justify-center items-center px-6 py-16 -mt-14"
     style="
-      background-image: url(&quot;/src/assets/img/hero-bg.jpg&quot;);
+      background-image: url('/img/hero-bg.jpg');
       background-size: cover;
       background-position: center;
     "

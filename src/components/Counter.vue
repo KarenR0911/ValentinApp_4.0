@@ -1,31 +1,31 @@
 <script setup>
-import { onMounted, ref } from "vue";
-import { useSupabase } from "../clients/supabase";
-const { supabase } = useSupabase();
-import CountUp from "vue-countup-v3";
+import { onMounted, ref } from 'vue'
+import { useSupabase } from '../clients/supabase'
+const { supabase } = useSupabase()
+import CountUp from 'vue-countup-v3'
 
-let numCards = ref(0);
-let numUsers = ref(0);
-let numCarreras = ref(23);
+let numCards = ref(0)
+let numUsers = ref(0)
+let numCarreras = ref(23)
 
 async function getCounters() {
   const { count } = await supabase
-    .from("cartas")
-    .select("*", { count: "exact" });
-  numCards.value = count;
+    .from('cartas')
+    .select('*', { count: 'exact' })
+  numCards.value = count
 }
 
 async function getUsers() {
   const { count } = await supabase
-    .from("profiles")
-    .select("*", { count: "exact" });
-  numUsers.value = count;
+    .from('profiles')
+    .select('*', { count: 'exact' })
+  numUsers.value = count
 }
 
 onMounted(() => {
-  getCounters();
-  getUsers();
-});
+  getCounters()
+  getUsers()
+})
 </script>
 
 <template>
@@ -55,11 +55,7 @@ onMounted(() => {
         <div class="grid gap-12 lg:grid-cols-12 items-center">
           <!-- Imagen izquierda -->
           <div class="lg:col-span-5 flex justify-center" data-aos="fade-up">
-            <img
-              src="../assets/img/counter-img.svg"
-              alt="Carta"
-              class="w-full h-auto"
-            />
+            <img src="/img/counter-img.svg" alt="Carta" class="w-full h-auto" />
           </div>
 
           <!-- Estadísticas derecha -->
