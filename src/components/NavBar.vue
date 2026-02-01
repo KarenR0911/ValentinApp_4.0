@@ -1,29 +1,29 @@
 <script setup>
-import { useSupabase } from "@/clients/supabase";
-import { RouterLink } from "vue-router";
-import { useUser } from "@/composables/useUser";
-import { useRouter } from "vue-router";
-import { ref } from "vue";
+import { useSupabase } from '@/clients/supabase'
+import { RouterLink } from 'vue-router'
+import { useUser } from '@/composables/useUser'
+import { useRouter } from 'vue-router'
+import { ref } from 'vue'
 
-const { user } = useUser();
-const { supabase } = useSupabase();
-const loading = ref(false);
-const router = useRouter();
+const { user } = useUser()
+const { supabase } = useSupabase()
+const loading = ref(false)
+const router = useRouter()
 
 async function signOut() {
   try {
-    loading.value = true;
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-    router.push("/");
+    loading.value = true
+    const { error } = await supabase.auth.signOut()
+    if (error) throw error
+    router.push('/')
   } catch (error) {
-    alert(error.message);
+    alert(error.message)
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 
-const open = ref(false);
+const open = ref(false)
 </script>
 
 <template>

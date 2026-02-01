@@ -1,70 +1,70 @@
 <script setup>
-import { useSupabase } from "@/clients/supabase";
-import { onMounted, ref, toRefs } from "vue";
-import { useRouter } from "vue-router";
-import Swal from "sweetalert2";
+import { useSupabase } from '@/clients/supabase'
+import { onMounted, ref, toRefs } from 'vue'
+import { useRouter } from 'vue-router'
+import Swal from 'sweetalert2'
 
-const props = defineProps(["user"]);
-const { user } = toRefs(props);
+const props = defineProps(['user'])
+const { user } = toRefs(props)
 
-const username = ref(null);
-const surname = ref(null);
-const decanato = ref(null);
-const role = ref(null);
+const username = ref(null)
+const surname = ref(null)
+const decanato = ref(null)
+const role = ref(null)
 
-const texto = ref("");
-const destinatario = ref("");
-const destino = ref("");
+const texto = ref('')
+const destinatario = ref('')
+const destino = ref('')
 
-const loading = ref(false);
-const anonimato = ref(false);
+const loading = ref(false)
+const anonimato = ref(false)
 
-const { supabase } = useSupabase();
-const router = useRouter();
+const { supabase } = useSupabase()
+const router = useRouter()
 
 onMounted(() => {
-  getProfile();
-});
+  getProfile()
+})
 
 const getProfile = async () => {
   try {
-    loading.value = true;
+    loading.value = true
     const { data, error } = await supabase
-      .from("profiles")
-      .select("username, surname, decanato, role")
-      .eq("id", user.value.id)
-      .single();
+      .from('profiles')
+      .select('username, surname, decanato, role')
+      .eq('id', user.value.id)
+      .single()
 
-    if (error) throw error;
+    if (error) throw error
 
-    username.value = data.username;
-    surname.value = data.surname;
-    decanato.value = data.decanato;
-    role.value = data.role;
+    username.value = data.username
+    surname.value = data.surname
+    decanato.value = data.decanato
+    role.value = data.role
   } catch (error) {
-    Swal.fire("Error", error.message, "error");
+    Swal.fire('Error', error.message, 'error')
   } finally {
-    loading.value = false;
+    loading.value = false
 
     if (!username.value || !surname.value) {
       Swal.fire({
-        icon: "error",
-        title: "Perfil incompleto",
-        text: "Debes completar tu perfil antes de enviar cartas",
-      });
-      router.push("/");
+        icon: 'error',
+        title: 'Perfil incompleto',
+        text: 'Debes completar tu perfil antes de enviar cartas',
+      })
+      router.push('/')
     }
   }
-};
+}
 
 const sendCard = async () => {
   if (!texto.value || !destinatario.value || !destino.value) {
-    Swal.fire("Oops...", "Debes rellenar todos los campos", "error");
-    return;
+    Swal.fire('Oops...', 'Debes rellenar todos los campos', 'error')
+    return
   }
 
   try {
-    loading.value = true;
+    loading.value = true
 
     const payload = {
       nombre: username.value,
@@ -75,30 +75,30 @@ const sendCard = async () => {
       destino: destino.value,
       destinatario: destinatario.value,
       rol: role.value,
-    };
+    }
 
-    const { error } = await supabase.from("cartas").upsert(payload);
-    if (error) throw error;
+    const { error } = await supabase.from('cartas').upsert(payload)
+    if (error) throw error
 
-    Swal.fire("¡Carta enviada!", "Revisa el buzón 💌", "success");
-    texto.value = "";
-    destinatario.value = "";
+    Swal.fire('¡Carta enviada!', 'Revisa el buzón 💌', 'success')
+    texto.value = ''
+    destinatario.value = ''
   } catch (error) {
-    Swal.fire("Error", error.message, "error");
+    Swal.fire('Error', error.message, 'error')
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
 const handleIncognito = () => {
-  anonimato.value = !anonimato.value;
+  anonimato.value = !anonimato.value
   if (anonimato.value) {
-    username.value = "Anónimo";
-    surname.value = "🕵️";
+    username.value = 'Anónimo'
+    surname.value = '🕵️'
   } else {
-    getProfile();
+    getProfile()
   }
-};
+}
 </script>
 
 <template>
@@ -211,7 +211,7 @@ const handleIncognito = () => {
             class="px-6 py-2 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-400 transition disabled:opacity-60 flex items-center gap-2"
           >
             <i class="bi bi-chat-heart"></i>
-            {{ loading ? "Enviando…" : "Enviar" }}
+            {{ loading ? 'Enviando…' : 'Enviar' }}
           </button>
         </div>
       </form>

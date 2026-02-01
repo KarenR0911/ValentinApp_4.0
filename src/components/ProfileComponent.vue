@@ -1,52 +1,52 @@
 <script setup>
-import { useSupabase } from "@/clients/supabase";
-import { onMounted, ref, toRefs } from "vue";
-import { useRouter, RouterLink } from "vue-router";
-import { useAuth } from "@/composables/useAuth.js";
-import Swal from "sweetalert2";
+import { useSupabase } from '@/clients/supabase'
+import { onMounted, ref, toRefs } from 'vue'
+import { useRouter, RouterLink } from 'vue-router'
+import { useAuth } from '@/composables/useAuth.js'
+import Swal from 'sweetalert2'
 
-const props = defineProps(["user"]);
-const { user } = toRefs(props);
+const props = defineProps(['user'])
+const { user } = toRefs(props)
 
-const { getUserRole } = useAuth();
-const userRole = ref("");
+const { getUserRole } = useAuth()
+const userRole = ref('')
 
-const loading = ref(false);
-const username = ref();
-const surname = ref();
-const decanato = ref();
-const { supabase } = useSupabase();
-const router = useRouter();
+const loading = ref(false)
+const username = ref()
+const surname = ref()
+const decanato = ref()
+const { supabase } = useSupabase()
+const router = useRouter()
 
-const users = ref([]);
-const oneUser = ref([]);
-const userCards = ref([]);
+const users = ref([])
+const oneUser = ref([])
+const userCards = ref([])
 
 onMounted(() => {
-  getProfile();
-  checkUserRole();
-});
+  getProfile()
+  checkUserRole()
+})
 
 const getProfile = async () => {
   try {
-    loading.value = true;
+    loading.value = true
     const { data, error } = await supabase
-      .from("profiles")
+      .from('profiles')
       .select(`username, surname, decanato`)
-      .eq("id", user.value.id)
-      .single();
+      .eq('id', user.value.id)
+      .single()
 
-    if (error) throw error;
+    if (error) throw error
 
     if (data) {
-      username.value = data.username;
-      surname.value = data.surname;
-      decanato.value = data.decanato;
+      username.value = data.username
+      surname.value = data.surname
+      decanato.value = data.decanato
     }
   } catch (error) {
-    alert(error.message);
+    alert(error.message)
   } finally {
-    loading.value = false;
+    loading.value = false
 
     if (
       username.value == null ||
@@ -54,30 +54,30 @@ const getProfile = async () => {
       decanato.value == null
     ) {
       Swal.fire({
-        icon: "info",
-        title: "Completa tu Perfil",
-        text: "Completa tu perfil para poder enviar cartas, recuerda ingresar tu nombre, apellido y decanato al que perteneces",
-      });
+        icon: 'info',
+        title: 'Completa tu Perfil',
+        text: 'Completa tu perfil para poder enviar cartas, recuerda ingresar tu nombre, apellido y decanato al que perteneces',
+      })
     }
   }
-};
+}
 
 async function updateProfile() {
   if (
-    username.value == "" ||
-    surname.value == "" ||
+    username.value == '' ||
+    surname.value == '' ||
     username.value == null ||
     surname.value == null ||
     decanato.value == null
   ) {
     Swal.fire({
-      icon: "error",
-      title: "Oops...",
-      text: "Debes tener un Nombre, Apellido y Decanato",
-    });
+      icon: 'error',
+      title: 'Oops...',
+      text: 'Debes tener un Nombre, Apellido y Decanato',
+    })
   } else {
     try {
-      loading.value = true;
+      loading.value = true
 
       const updates = {
         id: user.value.id,
@@ -85,113 +85,113 @@ async function updateProfile() {
         surname: surname.value,
         decanato: decanato.value,
         updated_at: new Date(),
-      };
+      }
 
-      const { error } = await supabase.from("profiles").upsert(updates);
+      const { error } = await supabase.from('profiles').upsert(updates)
 
-      if (error) throw error;
+      if (error) throw error
     } catch (error) {
-      alert(error.message);
+      alert(error.message)
     } finally {
-      loading.value = false;
+      loading.value = false
       Swal.fire({
-        title: "¡Actualización Exitosa!",
-        text: "Has actualizado los datos correctamente",
-        icon: "success",
-      });
+        title: '¡Actualización Exitosa!',
+        text: 'Has actualizado los datos correctamente',
+        icon: 'success',
+      })
     }
   }
 }
 
 async function signOut() {
   try {
-    loading.value = true;
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-    router.push("/");
+    loading.value = true
+    const { error } = await supabase.auth.signOut()
+    if (error) throw error
+    router.push('/')
   } catch (error) {
-    alert(error.message);
+    alert(error.message)
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 
 function cargarData() {
-  getUsers();
+  getUsers()
 }
 
 async function getUsers() {
   const { data } = await supabase
-    .from("profiles")
+    .from('profiles')
     .select()
-    .order("id", { ascending: false });
-  users.value = data;
+    .order('id', { ascending: false })
+  users.value = data
 }
 
 async function getOneUser(id) {
   try {
     const { data, error } = await supabase
-      .from("profiles")
+      .from('profiles')
       .select()
-      .eq("id", id)
-      .single();
+      .eq('id', id)
+      .single()
 
-    oneUser.value = data;
+    oneUser.value = data
 
-    getUserCartas(id);
+    getUserCartas(id)
 
-    if (error) throw error;
+    if (error) throw error
   } catch (error) {
-    alert(error.message);
+    alert(error.message)
   }
 }
 
 async function getUserCartas(id) {
-  const { data } = await supabase.from("cartas").select().eq("id_user", id);
-  userCards.value = data;
+  const { data } = await supabase.from('cartas').select().eq('id_user', id)
+  userCards.value = data
 }
 
 const checkUserRole = async () => {
   try {
-    const role = await getUserRole();
-    userRole.value = role;
+    const role = await getUserRole()
+    userRole.value = role
   } catch (error) {
-    console.log("Desautorizado para eliminar");
+    console.log('Desautorizado para eliminar')
   }
-};
+}
 
 const deleteCard = async (id) => {
   try {
-    const { error } = await supabase.from("cartas").delete().eq("id", id);
-    if (error) throw error;
+    const { error } = await supabase.from('cartas').delete().eq('id', id)
+    if (error) throw error
     Swal.fire({
-      icon: "success",
-      title: "Carta eliminada",
-      text: "La carta ha sido eliminada correctamente",
-    });
+      icon: 'success',
+      title: 'Carta eliminada',
+      text: 'La carta ha sido eliminada correctamente',
+    })
   } catch (error) {
-    console.log(error);
+    console.log(error)
   }
-};
+}
 
 const questionDelete = async (id) => {
   Swal.fire({
-    title: "¿Estás seguro?",
-    text: "No podrás revertir esta acción",
-    icon: "warning",
+    title: '¿Estás seguro?',
+    text: 'No podrás revertir esta acción',
+    icon: 'warning',
     showCancelButton: true,
-    confirmButtonColor: "#34d499",
-    cancelButtonColor: "#79113a",
-    confirmButtonText: "Sí, eliminar",
-    cancelButtonText: "Cancelar",
+    confirmButtonColor: '#34d499',
+    cancelButtonColor: '#79113a',
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar',
   }).then((result) => {
     if (result.isConfirmed) {
-      deleteCard(id);
+      deleteCard(id)
     } else if (result.dismiss === Swal.DismissReason.cancel) {
-      Swal.fire("La carta no ha sido eliminada", "", "info");
+      Swal.fire('La carta no ha sido eliminada', '', 'info')
     }
-  });
-};
+  })
+}
 </script>
 
 <template>
@@ -256,7 +256,7 @@ const questionDelete = async (id) => {
             @click="updateProfile"
           >
             <i class="bi bi-person-check-fill"></i>
-            {{ loading ? "Cargando..." : "Actualizar" }}
+            {{ loading ? 'Cargando...' : 'Actualizar' }}
           </button>
           <button
             class="btn btn-secondary"
