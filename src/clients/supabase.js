@@ -1,19 +1,16 @@
+import { createClient } from '@supabase/supabase-js'
+import { useUserStore } from '@/stores/userStore'
 
-const supabase = {
-  auth: {
-    onAuthStateChange: () => {},
-    signInWithPassword: async () => ({ data: null, error: null }),
-    signOut: async () => ({ error: null }),
-    getUser: async () => ({ data: { user: null }, error: null })
-  },
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseKey = import.meta.env.VITE_SUPABASE_KEY
 
-  from: () => ({
-    select: async () => ({ data: [], error: null }),
-    insert: async () => ({ data: null, error: null }),
-    update: async () => ({ data: null, error: null }),
-    delete: async () => ({ data: null, error: null })
-  })
-}
+const supabase = createClient(supabaseUrl, supabaseKey)
+
+supabase.auth.onAuthStateChange((event, session) => {
+  const userStore = useUserStore()
+
+  userStore.setUser(session?.user || null)
+})
 
 export function useSupabase() {
   return { supabase }
