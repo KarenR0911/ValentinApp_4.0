@@ -42,7 +42,7 @@ const loadCards = async () => {
   try {
     const { data, error } = await supabase
       .from('cards')
-      .select('*, author:profiles(*)')
+      .select('*, author:public_profiles(nombre, apellido)')
       .order('created_at', { ascending: false })
 
     if (error) throw error
