@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useSupabase } from '@/clients/supabase'
 import { useUserStore } from '@/stores/userStore'
 import { useRouter } from 'vue-router'
@@ -29,8 +29,9 @@ const submit = async () => {
   })
 
   if (!parsed.success) {
-    parsed.error.errors.forEach((e) => {
-      errors.value[e.path[0]] = e.message
+    const issues = parsed.error?.issues || parsed.error?.errors || []
+    issues.forEach((e) => {
+      errors.value[e.path?.[0]] = e.message
     })
     return
   }
