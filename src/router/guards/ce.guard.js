@@ -28,12 +28,12 @@ export const ceGuard = async (to, from, next) => {
 
   // 4. Sin perfil → completar
   if (!profile) {
-    return next('/complete-profile')
+    return next('/completar-perfil')
   }
 
   // 5. Rol CE
-  if (profile.role !== 'ce_admin') {
-    return next('/profile')
+  if (profile.rol !== 'ce_admin') {
+    return next('/')
   }
 
   next()

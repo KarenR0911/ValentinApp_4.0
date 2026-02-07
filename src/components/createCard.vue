@@ -1,6 +1,6 @@
 <script setup>
 import { useSupabase } from '@/clients/supabase'
-import { ref, computed } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import Swal from 'sweetalert2'
 import { cardSchema } from '@/schemas/card.schema.js'
@@ -24,6 +24,7 @@ const form = ref({
 const loading = ref(false)
 const errors = ref({})
 const userStore = useUserStore()
+const isLoadingSpotify = ref(false)
 
 /* ======================
    SPOTIFY EMBED
@@ -35,6 +36,44 @@ const spotifyEmbed = computed(() => {
     'open.spotify.com/embed',
   )
 })
+
+watch(
+  () => form.value.spotify_url,
+  async (newUrl) => {
+    if (!newUrl) {
+      isLoadingSpotify.value = false
+      return
+    }
+
+    isLoadingSpotify.value = true
+
+    await nextTick()
+
+    const iframe = document.getElementById('spotify-preview')
+
+    if (iframe) {
+      iframe.onload = () => {
+        isLoadingSpotify.value = false
+      }
+    }
+  },
+)
+
+const pasteFromClipboard = async () => {
+  try {
+    const text = await navigator.clipboard.readText()
+
+    if (!text) return
+
+    form.value.spotify_url = text
+  } catch (err) {
+    Swal.fire({
+      icon: 'error',
+      title: 'No se pudo pegar',
+      text: 'Tu navegador bloqueó el acceso al portapapeles',
+    })
+  }
+}
 
 /* ======================
    SEND CARD
@@ -252,29 +291,60 @@ const submit = async () => {
 
         <!-- Spotify -->
         <div>
-          <label for="spotify" class="block text-sm text-gray-700 mb-1"
-            >Link de Spotify (opcional)</label
-          >
-          <input
-            v-model="form.spotify_url"
-            type="text"
-            id="spotify"
-            placeholder="Link de Spotify (opcional)"
-            class="w-full px-4 py-2 rounded-xl bg-white/60 border border-white/40 focus:ring-2 focus:ring-primaryRed focus:outline-none"
-          />
-          <small class="text-red-600 text-sm" v-if="errors.spotify_url">{{
-            errors.spotify_url
-          }}</small>
+          <label for="spotify" class="block text-sm text-gray-700 mb-1">
+            Link de Spotify (opcional)
+          </label>
 
-          <!-- Preview Spotify -->
-          <iframe
-            v-if="spotifyEmbed"
-            :src="spotifyEmbed"
-            width="100%"
-            height="80"
-            class="rounded-lg"
-            allow="autoplay; clipboard-write; encrypted-media; fullscreen"
-          ></iframe>
+          <div class="flex gap-2">
+            <input
+              v-model="form.spotify_url"
+              type="text"
+              id="spotify"
+              placeholder="https://open.spotify.com/track/..."
+              class="flex-1 px-4 py-2 rounded-xl bg-white/60 border border-white/40 focus:ring-2 focus:ring-primaryRed focus:outline-none"
+            />
+
+            <!-- BOTÓN PEGAR -->
+            <button
+              type="button"
+              @click="pasteFromClipboard"
+              class="px-4 py-2 rounded-xl text-white bg-primaryRed hover:bg-primaryRed/80 transition font-semibold"
+            >
+              📋 Pegar
+            </button>
+          </div>
+
+          <small class="text-red-600 text-sm" v-if="errors.spotify_url">
+            {{ errors.spotify_url }}
+          </small>
+
+          <!-- PREVIEW -->
+          <div v-if="spotifyEmbed" class="relative mt-3">
+            <!-- Loader -->
+            <div
+              v-if="isLoadingSpotify"
+              class="flex items-center justify-center h-20 bg-gray-200 rounded-lg"
+            >
+              <i
+                class="bi bi-arrow-clockwise animate-spin text-3xl text-primaryRed"
+              ></i>
+            </div>
+
+            <!-- Iframe -->
+            <iframe
+              v-show="!isLoadingSpotify"
+              id="spotify-preview"
+              :src="spotifyEmbed"
+              width="100%"
+              height="80"
+              class="rounded-lg"
+              allow="autoplay; clipboard-write; encrypted-media; fullscreen"
+            ></iframe>
+          </div>
+
+          <small class="text-gray-700 text-sm mt-1">
+            Puedes insertar canción o playlist 🎵
+          </small>
         </div>
 
         <!-- Incognito -->
@@ -294,6 +364,11 @@ const submit = async () => {
           <small class="text-red-600 text-sm" v-if="errors.is_anonymous"
             >{{ errors.is_anonymous }}
           </small>
+          <small
+            class="text-sm text-primaryRed font-bold"
+            v-if="form.is_anonymous"
+            >Tu carta será anónima</small
+          >
         </div>
 
         <!-- Button -->

@@ -55,6 +55,13 @@ const open = ref(false)
                 >Buzón</RouterLink
               >
             </li>
+            <li v-if="userStore.profile?.rol === 'ce_admin'">
+              <RouterLink
+                to="/moderacion"
+                class="px-3 py-2 rounded-md text-gray-800 hover:text-red-500 transition"
+                >Moderación</RouterLink
+              >
+            </li>
             <li>
               <RouterLink
                 to="/about"
@@ -136,6 +143,13 @@ const open = ref(false)
           class="block px-3 py-2 rounded-md text-gray-800 hover:text-red-500 transition"
           @click="open = false"
           >Buzón</RouterLink
+        >
+        <RouterLink
+          to="/moderacion"
+          v-if="userStore.profile?.rol === 'ce_admin'"
+          class="block px-3 py-2 rounded-md text-gray-800 hover:text-red-500 transition"
+          @click="open = false"
+          >Moderación</RouterLink
         >
         <RouterLink
           to="/about"

@@ -1,14 +1,30 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 
 const props = defineProps({
   cards: Array,
+  isAdmin: Boolean,
 })
 
+const emit = defineEmits(['update-card-status'])
+
 const selectedCard = ref(null)
+const isLoadingSpotify = ref(false)
 
 const openModal = (card) => {
   selectedCard.value = card
+  if (card.spotify_url) {
+    isLoadingSpotify.value = true
+    nextTick(() => {
+      // Small delay to ensure iframe is rendered before attaching event listener
+      const iframe = document.getElementById('spotify-iframe')
+      if (iframe) {
+        iframe.onload = () => {
+          isLoadingSpotify.value = false
+        }
+      }
+    })
+  }
 }
 
 const embedUrl = (url) => {
@@ -26,7 +42,7 @@ const embedUrl = (url) => {
       class="cursor-pointer group bg-primaryGray/50 backdrop-blur-md border border-white/30 p-6 rounded-xl shadow-lg shadow-black/10 hover:bg-primaryRed/80 transition-all duration-300"
     >
       <h3 class="text-xl font-serif text-primaryRed group-hover:text-[#F7E4DA]">
-        Para: {{ card.destinatario }}
+        Para: {{ card.destinatario }} - {{ card.semestre }}° Semestre
       </h3>
 
       <p class="text-sm text-stone-600 mt-2 group-hover:text-[#F3D6C6]">
@@ -67,11 +83,37 @@ const embedUrl = (url) => {
 
         <p class="mt-2">
           De:
-          <span v-if="selectedCard.is_anonymous">💌 Anónimo</span>
+          <span v-if="selectedCard.is_anonymous && !isAdmin">💌 Anónimo</span>
+          <span v-else-if="selectedCard.is_anonymous && isAdmin">
+            💌 Anónimo ({{ selectedCard.author?.nombre }}
+            {{ selectedCard.author?.apellido }})
+          </span>
           <span v-else>
             {{ selectedCard.author?.nombre }}
             {{ selectedCard.author?.apellido }}
           </span>
+        </p>
+
+        <p
+          v-if="selectedCard.is_anonymous && isAdmin"
+          class="text-sm text-stone-600"
+        >
+          ID Autor:
+          <span class="font-semibold">{{ selectedCard.author?.id }}</span>
+        </p>
+        <p
+          v-if="selectedCard.is_anonymous && isAdmin"
+          class="text-sm text-stone-600"
+        >
+          Decanato Autor:
+          <span class="font-semibold">{{ selectedCard.author?.decanato }}</span>
+        </p>
+        <p
+          v-if="selectedCard.is_anonymous && isAdmin"
+          class="text-sm text-stone-600"
+        >
+          Semestre Autor:
+          <span class="font-semibold">{{ selectedCard.author?.semestre }}</span>
         </p>
 
         <p class="text-sm text-stone-600">
@@ -86,15 +128,35 @@ const embedUrl = (url) => {
         </p>
 
         <!-- Spotify -->
-        <iframe
-          v-if="selectedCard.spotify_url"
-          class="mt-6 rounded-lg"
-          :src="embedUrl(selectedCard.spotify_url)"
-          width="100%"
-          height="80"
-          frameborder="0"
-          allow="autoplay; clipboard-write; encrypted-media; fullscreen"
-        ></iframe>
+        <div v-if="selectedCard.spotify_url" class="relative mt-6">
+          <div
+            v-if="isLoadingSpotify"
+            class="flex items-center justify-center h-20 bg-gray-200 rounded-lg"
+          >
+            <i
+              class="bi bi-arrow-clockwise animate-spin text-4xl text-primaryRed"
+            ></i>
+          </div>
+          <iframe
+            v-show="!isLoadingSpotify"
+            id="spotify-iframe"
+            class="rounded-lg"
+            :src="embedUrl(selectedCard.spotify_url)"
+            width="100%"
+            height="80"
+            frameborder="0"
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen"
+          ></iframe>
+        </div>
+
+        <!-- Admin Moderation Button -->
+        <button
+          v-if="isAdmin && selectedCard.status !== 'hidden'"
+          @click="emit('update-card-status', selectedCard.id, 'hidden')"
+          class="mt-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+        >
+          Ocultar Carta
+        </button>
       </div>
     </div>
   </div>

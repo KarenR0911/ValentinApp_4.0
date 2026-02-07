@@ -1,8 +1,8 @@
 <script setup>
 import Card from '@/components/Card.vue'
-import Preloader from '@/components/Preloader.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useSupabase } from '@/clients/supabase'
+import { useUserStore } from '@/stores/userStore'
 import Swal from 'sweetalert2'
 
 const navbarHeight = ref(0)
@@ -15,6 +15,11 @@ const cards = ref([])
 const loading = ref(false)
 
 const { supabase } = useSupabase()
+const userStore = useUserStore()
+
+const isAdmin = computed(() => {
+  return userStore.profile?.rol === 'ce_admin'
+})
 
 /* =========================
    BUSCADOR
@@ -43,9 +48,17 @@ const loadCards = async () => {
   try {
     const { data, error } = await supabase
       .from('cards')
-      .select('*, author:public_profiles(nombre, apellido)')
+      .select(
+        `*,
+        author:profiles(
+          id,
+          nombre,
+          apellido,
+          decanato,
+          semestre
+        )`,
+      )
       .order('created_at', { ascending: false })
-      .eq('status', 'published') // Solo cargar cartas pendientes para moderación
 
     if (error) throw error
 
@@ -62,6 +75,32 @@ const loadCards = async () => {
   }
 }
 
+const handleUpdateCardStatus = async (cardId, newStatus) => {
+  try {
+    const { error } = await supabase
+      .from('cards')
+      .update({ status: newStatus })
+      .eq('id', cardId)
+
+    if (error) throw error
+
+    // Actualizar la carta localmente
+    const index = cards.value.findIndex((card) => card.id === cardId)
+    if (index !== -1) {
+      cards.value[index].status = newStatus
+    }
+
+    Swal.fire(
+      '¡Éxito!',
+      `Carta ${newStatus === 'hidden' ? 'ocultada' : 'actualizada'} correctamente.`,
+      'success',
+    )
+  } catch (error) {
+    Swal.fire('Error', 'No se pudo actualizar el estado de la carta.', 'error')
+    console.error('Error updating card status:', error)
+  }
+}
+
 onMounted(() => {
   loadCards()
 })
@@ -72,7 +111,6 @@ onMounted(() => {
     class="w-screen flex flex-col items-center overflow-y-auto bg-cover bg-center"
     :style="`height: calc(100vh - ${navbarHeight}px); background-image: url('/img/hero-bg.jpg');`"
   >
-    <Preloader v-if="loading" />
     <!-- 🔍 BUSCADOR -->
     <div class="w-full max-w-2xl mt-8 px-6">
       <div class="relative group">
@@ -92,7 +130,11 @@ onMounted(() => {
 
     <!-- 💌 LISTA -->
     <div class="w-full max-w-6xl mt-10 px-6 pb-20">
-      <Card :cards="filteredCards" />
+      <Card
+        :cards="filteredCards"
+        :isAdmin="isAdmin"
+        @update-card-status="handleUpdateCardStatus"
+      />
     </div>
 
     <!-- Estado vacío -->

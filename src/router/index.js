@@ -105,6 +105,12 @@ const router = createRouter({
       name: 'enviar',
       component: () => import('../views/SendCardView.vue'),
     },
+    {
+      path: '/moderacion',
+      name: 'moderacion',
+      component: () => import('../views/ModerationView.vue'),
+      beforeEnter: ceGuard,
+    },
   ],
   linkExactActiveClass: 'active',
 })

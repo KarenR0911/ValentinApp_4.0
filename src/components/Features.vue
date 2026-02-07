@@ -40,7 +40,7 @@
       class="relative z-10 max-w-7xl mx-auto px-6 text-center mb-20"
       data-aos="fade-up"
     >
-      <h2 class="text-4xl font-extrabold text-white">Version 3.0</h2>
+      <h2 class="text-4xl font-extrabold text-white">Version 4.0</h2>
       <p class="mt-3 text-gray-200 text-lg">La forma más honesta de conectar</p>
     </div>
 
