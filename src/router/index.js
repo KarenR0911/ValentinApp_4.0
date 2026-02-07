@@ -104,6 +104,7 @@ const router = createRouter({
       path: '/enviar',
       name: 'enviar',
       component: () => import('../views/SendCardView.vue'),
+      beforeEnter: isLoginAuth,
     },
     {
       path: '/moderacion',
