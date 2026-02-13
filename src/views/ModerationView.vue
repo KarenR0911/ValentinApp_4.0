@@ -1,175 +1,197 @@
 <script setup>
 import Card from '@/components/Card.vue'
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { useSupabase } from '@/clients/supabase'
 import { useUserStore } from '@/stores/userStore'
 import Swal from 'sweetalert2'
 
+/* ================= NAVBAR ================= */
 const navbarHeight = ref(0)
-
 const updateNavbarHeight = () => {
   navbarHeight.value = window.innerWidth >= 768 ? 80 : 64
 }
 
+/* ================= SUPABASE ================= */
+const { supabase } = useSupabase()
+const userStore = useUserStore()
+const isAdmin = computed(() => userStore.profile?.rol === 'ce_admin')
+
+/* ================= PAGINACIÓN ================= */
 const cards = ref([])
 const loading = ref(false)
 
-const { supabase } = useSupabase()
-const userStore = useUserStore()
+const page = ref(0)
+const pageSize = 48
+const hasMore = ref(true)
 
-const isAdmin = computed(() => {
-  return userStore.profile?.rol === 'ce_admin'
-})
+/* ================= FILTROS ================= */
+const decanatos = ['DCYT', 'DCV', 'DAG', 'DEHA', 'DCS', 'DIC', 'DCEE']
+const selectedDecanato = ref('')
+const search = ref('')
+// Variable temporal para el input de búsqueda
+const searchInput = ref('')
 
-/* =========================
-   MAPA CARRERA → DECANATO
-========================= */
-const careerToDecanato = {
-  /* DCYT */
-  'Ingeniería en Informática': 'DCYT',
-  'Ingeniería en Telemática': 'DCYT',
-  'Ingeniería de Producción': 'DCYT',
-  'Análisis de Sistemas': 'DCYT',
-  'Licenciatura en Física': 'DCYT',
-  'Licenciatura en Matemática': 'DCYT',
-
-  /* DCV */
-  'Medicina Veterinaria': 'DCV',
-  'T.S.U Agropecuaria': 'DCV',
-
-  /* DIC */
-  'Ingeniería Civil': 'DIC',
-  Urbanismo: 'DIC',
-
-  /* DAG */
-  'Ingeniería Agronómica': 'DAG',
-  'Ingeniería Agroindustrial': 'DAG',
-  'T.S.U Agroindustrial': 'DAG',
-
-  /* DCS */
-  Enfermería: 'DCS',
-  Medicina: 'DCS',
-
-  /* DCEE */
-  Economía: 'DCEE',
-  Administración: 'DCEE',
-  Contaduría: 'DCEE',
-
-  /* DEHA */
-  'Licenciatura en Desarrollo Humano': 'DEHA',
-  'Licenciatura en Psicología': 'DEHA',
-  'Licenciatura en Música': 'DEHA',
-  'Licenciatura en Artes Plásticas': 'DEHA',
+/* ===== MAPA DECANATO → CARRERAS ===== */
+const decanatoToCareers = {
+  DCYT: [
+    'Ingeniería en Informática',
+    'Ingeniería en Telemática',
+    'Ingeniería de Producción',
+    'Análisis de Sistemas',
+    'Licenciatura en Física',
+    'Licenciatura en Matemática',
+  ],
+  DCV: ['Medicina Veterinaria', 'T.S.U Agropecuaria'],
+  DIC: ['Ingeniería Civil', 'Urbanismo'],
+  DAG: [
+    'Ingeniería Agronómica',
+    'Ingeniería Agroindustrial',
+    'T.S.U Agroindustrial',
+  ],
+  DCS: ['Enfermería', 'Medicina'],
+  DCEE: ['Economía', 'Administración', 'Contaduría'],
+  DEHA: [
+    'Licenciatura en Desarrollo Humano',
+    'Licenciatura en Psicología',
+    'Licenciatura en Música',
+    'Licenciatura en Artes Plásticas',
+  ],
 }
 
-/* =========================
-   FILTRO DECANATO
-========================= */
-const decanatos = ['DCYT', 'DCV', 'DAG', 'DEHA', 'DCS', 'DIC', 'DCEE']
-
-const selectedDecanato = ref('')
-
+/* Default decanato del usuario */
 onMounted(() => {
   if (userStore.profile?.decanato) {
     selectedDecanato.value = userStore.profile.decanato
   }
 })
 
-/* =========================
-   BUSCADOR
-========================= */
-const search = ref('')
+/* ================= INFINITE SCROLL ================= */
+const sentinel = ref(null)
+let observer = null
 
-const filteredCards = computed(() => {
-  let result = cards.value
+const initObserver = async () => {
+  await nextTick()
 
-  /* FILTRO POR DECANATO */
-  if (selectedDecanato.value) {
-    result = result.filter((c) => {
-      const decanato = careerToDecanato[c.decanato_destino]
-      return decanato === selectedDecanato.value
-    })
-  }
+  observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0].isIntersecting && hasMore.value && !loading.value) {
+        loadCards()
+      }
+    },
+    { rootMargin: '300px' },
+  )
 
-  /* BUSCADOR */
-  if (search.value) {
-    const q = search.value.toLowerCase()
+  if (sentinel.value) observer.observe(sentinel.value)
+}
 
-    result = result.filter(
-      (c) =>
-        c.destinatario.toLowerCase().includes(q) ||
-        c.decanato_destino.toLowerCase().includes(q),
-    )
-  }
-
-  return result
-})
-
-onMounted(() => {
-  updateNavbarHeight()
-  window.addEventListener('resize', updateNavbarHeight)
-})
-
+/* ================= LOAD CARDS ================= */
 const loadCards = async () => {
+  if (!hasMore.value || loading.value) return
+
   loading.value = true
+
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('cards')
       .select(
-        `*,
+        `
+        *,
         author:profiles(
           id,
           nombre,
           apellido,
           decanato,
           semestre
-        )`,
+        )
+      `,
       )
+      .eq('status', 'published')
       .order('created_at', { ascending: false })
 
+    /* ===== DECANATO FILTER ===== */
+    if (selectedDecanato.value) {
+      const careers = decanatoToCareers[selectedDecanato.value]
+      if (careers) {
+        query = query.in('decanato_destino', careers)
+      }
+    }
+
+    /* ===== SEARCH FILTER ===== */
+    if (search.value) {
+      query = query.or(
+        `destinatario.ilike.%${search.value}%,decanato_destino.ilike.%${search.value}%`,
+      )
+    }
+
+    /* ===== RANGE ===== */
+    const from = page.value * pageSize
+    const to = from + pageSize - 1
+    query = query.range(from, to)
+
+    const { data, error } = await query
     if (error) throw error
 
-    cards.value = data || []
+    if (!data.length) {
+      hasMore.value = false
+      return
+    }
+
+    cards.value.push(...data)
+    page.value++
   } catch (err) {
-    Swal.fire({
-      icon: 'error',
-      title: 'Ups...',
-      text: err.message || 'Ocurrió un error al cargar las cartas.',
-    })
-    cards.value = []
+    Swal.fire('Error', err.message || 'Error cargando cartas', 'error')
   } finally {
     loading.value = false
   }
 }
 
-const handleUpdateCardStatus = async (cardId, newStatus) => {
-  try {
-    const { error } = await supabase
-      .from('cards')
-      .update({ status: newStatus })
-      .eq('id', cardId)
+/* ================= RESET AL FILTRAR ================= */
+const resetAndReload = async () => {
+  cards.value = []
+  page.value = 0
+  hasMore.value = true
+  await loadCards()
+}
 
-    if (error) throw error
+/* ================= FUNCIÓN DE BÚSQUEDA ================= */
+const handleSearch = () => {
+  search.value = searchInput.value
+  resetAndReload()
+}
 
-    // Actualizar la carta localmente
-    const index = cards.value.findIndex((card) => card.id === cardId)
-    if (index !== -1) {
-      cards.value[index].status = newStatus
-    }
+/* ================= RESET AL CAMBIAR DECANATO ================= */
+watch(selectedDecanato, resetAndReload)
 
-    Swal.fire(
-      '¡Éxito!',
-      `Carta ${newStatus === 'hidden' ? 'ocultada' : 'actualizada'} correctamente.`,
-      'success',
-    )
-  } catch (error) {
-    Swal.fire('Error', 'No se pudo actualizar el estado de la carta.', 'error')
-    console.error('Error updating card status:', error)
+// Permitir búsqueda con Enter
+const handleKeyPress = (e) => {
+  if (e.key === 'Enter') {
+    handleSearch()
   }
 }
 
-onMounted(() => {
-  loadCards()
+/* ================= ADMIN UPDATE ================= */
+const handleUpdateCardStatus = async (cardId, newStatus) => {
+  const { error } = await supabase
+    .from('cards')
+    .update({ status: newStatus })
+    .eq('id', cardId)
+
+  if (!error) {
+    cards.value = cards.value.filter((c) => c.id !== cardId)
+  }
+}
+
+/* ================= INIT ================= */
+onMounted(async () => {
+  updateNavbarHeight()
+  window.addEventListener('resize', updateNavbarHeight)
+
+  await loadCards()
+  initObserver()
+})
+
+onBeforeUnmount(() => {
+  if (observer) observer.disconnect()
 })
 </script>
 
@@ -178,20 +200,26 @@ onMounted(() => {
     class="w-screen flex flex-col items-center overflow-y-auto bg-cover bg-center"
     :style="`height: calc(100vh - ${navbarHeight}px); background-image: url('/img/hero-bg.jpg');`"
   >
-    <!-- 🔍 BUSCADOR -->
+    <!-- 🔍 BUSCADOR CON BOTÓN -->
     <div class="w-full max-w-2xl mt-8 px-6">
-      <div class="relative group">
-        <input
-          v-model="search"
-          placeholder="Buscar por nombre o carrera 💌"
-          class="w-full p-4 rounded-xl bg-primaryGray/50 backdrop-blur-md border border-white/30 text-stone-700 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-primaryRed shadow-lg"
-        />
+      <div class="flex gap-2">
+        <div class="relative flex-1 group">
+          <input
+            v-model="searchInput"
+            @keypress="handleKeyPress"
+            placeholder="Buscar por nombre o carrera 💌"
+            class="w-full p-4 rounded-xl bg-primaryGray/50 backdrop-blur-md border border-white/30 text-stone-700 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-primaryRed shadow-lg"
+          />
+        </div>
 
-        <span
-          class="absolute right-4 top-3 text-xl text-primaryRed group-hover:scale-110 transition"
+        <!-- Botón de búsqueda -->
+        <button
+          @click="handleSearch"
+          class="px-6 rounded-xl bg-primaryRed hover:bg-red-700 text-white font-semibold shadow-lg transition-all duration-300 flex items-center gap-2"
         >
-          🔍
-        </span>
+          <span>🔍</span>
+          <span class="hidden sm:inline">Buscar</span>
+        </button>
       </div>
     </div>
 
@@ -218,14 +246,27 @@ onMounted(() => {
     <!-- 💌 LISTA -->
     <div class="w-full max-w-6xl mt-10 px-6 pb-20">
       <Card
-        :cards="filteredCards"
+        :cards="cards"
         :isAdmin="isAdmin"
         @update-card-status="handleUpdateCardStatus"
       />
+      <!-- LOADING -->
+      <div
+        v-if="loading"
+        class="bg-white/50 backdrop-blur-md rounded-xl p-6 text-center shadow-lg mt-2"
+      >
+        <p class="text-gray-700">Cargando más cartas...</p>
+      </div>
+
+      <!-- SENTINEL (trigger invisible) -->
+      <div ref="sentinel" class="h-10"></div>
     </div>
 
     <!-- Estado vacío -->
-    <p v-if="filteredCards.length === 0" class="text-white/80 mt-10 text-lg">
+    <p
+      v-if="!loading && cards.length === 0"
+      class="text-white/80 mt-10 text-lg"
+    >
       No se encontraron cartas 💔
     </p>
   </section>
