@@ -52,7 +52,13 @@ const embedUrl = (url) => {
       <p class="mt-3 text-stone-700 group-hover:text-[#F3D6C6]">
         De:
         <span v-if="card.is_anonymous">💌 Anónimo</span>
-        <span v-else>{{ card.author?.nombre }}</span>
+        <span v-else
+          >{{ card.author?.nombre }}
+          <i
+            v-if="card.author?.rol === 'ce_admin'"
+            class="bi bi-patch-check-fill text-red-500"
+          ></i
+        ></span>
       </p>
 
       <p class="text-xs text-stone-500 mt-4 group-hover:text-[#EBC1B0]">
@@ -91,6 +97,10 @@ const embedUrl = (url) => {
           <span v-else>
             {{ selectedCard.author?.nombre }}
             {{ selectedCard.author?.apellido }}
+            <i
+              v-if="selectedCard.author?.rol === 'ce_admin'"
+              class="bi bi-patch-check-fill text-red-500"
+            ></i>
           </span>
         </p>
 

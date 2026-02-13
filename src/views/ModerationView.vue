@@ -101,7 +101,8 @@ const loadCards = async () => {
           nombre,
           apellido,
           decanato,
-          semestre
+          semestre,
+          rol
         )
       `,
       )
