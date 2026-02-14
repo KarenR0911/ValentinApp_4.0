@@ -247,7 +247,33 @@ const handleKeyPress = (e) => {
 
     <!-- 💌 LISTA -->
     <div class="w-full max-w-6xl mt-10 px-6 pb-20">
-      <Card :cards="cards" />
+      <!-- <Card :cards="cards" /> -->
+      <!-- Aviso de mantenimiento -->
+      <div
+        class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 rounded-lg shadow-md"
+        role="alert"
+      >
+        <p class="font-bold">🚧 Mantenimiento en curso</p>
+        <p>
+          Estamos realizando mejoras en el sistema. Algunas funciones podrían no
+          estar disponibles temporalmente. ¡Gracias por tu paciencia!
+        </p>
+        <p>
+          Se esta añadiendo la opción de dar likes a las cartas, pero, los
+          mismos likes ayudan a filtrar y moderar para ocultar las cartas, no
+          permitiremos quitar el anónimato a una carta subida de tono con fines
+          de odio, sexo o cualquier fin hiriente. <br />
+          El día Lunes 16 de Febrero se conocerá la carta más popular de la
+          UCLA, la cual se mostrará en el buzón. Como se menciono anteriormente
+          no se permitirá una carta con fines de odio, sexo o cualquier fin
+          hiriente, por lo que se espera que la carta ganadora sea una carta
+          bonita y divertida.
+        </p>
+        <p>
+          Agradecemos la participación en este experimento social para conocer a
+          la comunidad de la UCLA 😄.
+        </p>
+      </div>
       <!-- LOADING -->
       <div
         v-if="loading"
