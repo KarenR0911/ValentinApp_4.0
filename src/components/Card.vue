@@ -1,6 +1,9 @@
 <script setup>
+import { useSupabase } from '@/clients/supabase'
+
 import { ref, nextTick } from 'vue'
 
+const { supabase } = useSupabase()
 const props = defineProps({
   cards: Array,
   isAdmin: Boolean,
@@ -29,6 +32,17 @@ const openModal = (card) => {
 
 const embedUrl = (url) => {
   return url.replace('open.spotify.com', 'open.spotify.com/embed')
+}
+
+const toggleLike = async (card) => {
+  const { data, error } = await supabase.rpc('toggle_like', {
+    p_card_id: card.id,
+  })
+
+  if (error) return console.error(error)
+
+  card.liked = data.liked
+  card.likes_count = data.count
 }
 </script>
 
@@ -64,6 +78,21 @@ const embedUrl = (url) => {
       <p class="text-xs text-stone-500 mt-4 group-hover:text-[#EBC1B0]">
         Click para leer 💘
       </p>
+
+      <div class="flex items-center gap-2 mt-3" @click.stop>
+        <button
+          @click="toggleLike(card)"
+          class="flex items-center gap-1 text-sm"
+        >
+          <i
+            :class="
+              card.liked ? 'bi bi-heart-fill text-red-500' : 'bi bi-heart'
+            "
+          ></i>
+
+          <span>{{ card.likes_count || 0 }}</span>
+        </button>
+      </div>
     </div>
 
     <!-- MODAL -->
