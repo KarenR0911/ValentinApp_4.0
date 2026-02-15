@@ -111,7 +111,8 @@ const loadCards = async () => {
       `,
       )
       .eq('status', 'published')
-      .order('created_at', { ascending: false })
+      .order('likes_count', { ascending: false }) // 👈 más likes primero
+      .order('created_at', { ascending: false }) // 👈 luego más recientes
 
     /* ===== DECANATO FILTER ===== */
     if (selectedDecanato.value) {
@@ -250,37 +251,26 @@ const handleKeyPress = (e) => {
           🎓
         </span>
       </div>
+
+      <!-- Aviso -->
+      <div
+        class="bg-primaryRed border-l-4 border-red-500 text-white p-4 mb-6 rounded-lg shadow-md mt-4"
+        role="alert"
+      >
+        <p class="font-bold">Votaciones en curso</p>
+        <p>
+          La mejor carta votada, se mostrará el Decanato proveniente y el
+          semestre del autor. ¡Así que vota por tus cartas favoritas! 💌✨
+          <br />
+          Estamos atentos para ocultar cartas obscenas o inapropiadas, pero si
+          ves alguna, por favor contacta al CE de tu decanato para borrarla 🙏.
+        </p>
+      </div>
     </div>
 
     <!-- 💌 LISTA -->
-    <div class="w-full max-w-6xl mt-10 px-6 pb-20">
+    <div class="w-full max-w-6xl mt-5 px-6 pb-20">
       <Card :cards="cards" />
-      <!-- Aviso de mantenimiento -->
-      <!-- <div
-        class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 rounded-lg shadow-md"
-        role="alert"
-      >
-        <p class="font-bold">🚧 Mantenimiento en curso</p>
-        <p>
-          Estamos realizando mejoras en el sistema. Algunas funciones podrían no
-          estar disponibles temporalmente. ¡Gracias por tu paciencia!
-        </p>
-        <p>
-          Se esta añadiendo la opción de dar likes a las cartas, pero, los
-          mismos likes ayudan a filtrar y moderar para ocultar las cartas, no
-          permitiremos quitar el anónimato a una carta subida de tono con fines
-          de odio, sexo o cualquier fin hiriente. <br />
-          El día Lunes 16 de Febrero se conocerá la carta más popular de la
-          UCLA, la cual se mostrará en el buzón. Como se menciono anteriormente
-          no se permitirá una carta con fines de odio, sexo o cualquier fin
-          hiriente, por lo que se espera que la carta ganadora sea una carta
-          bonita y divertida.
-        </p>
-        <p>
-          Agradecemos la participación en este experimento social para conocer a
-          la comunidad de la UCLA 😄.
-        </p>
-      </div> -->
       <!-- LOADING -->
       <div
         v-if="loading"

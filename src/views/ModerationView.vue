@@ -106,7 +106,8 @@ const loadCards = async () => {
         )
       `,
       )
-      .order('created_at', { ascending: false })
+      .order('likes_count', { ascending: false }) // 👈 más likes primero
+      .order('created_at', { ascending: false }) // 👈 luego más recientes
 
     /* ===== DECANATO FILTER ===== */
     if (selectedDecanato.value) {
